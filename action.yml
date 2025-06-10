@@ -1,0 +1,25 @@
+name: "S3 Sync (OIDC)"
+description: "Sync a directory to an AWS S3 bucket using OIDC"
+author: yourname
+runs:
+  using: docker
+  image: Dockerfile
+branding:
+  icon: refresh-cw
+  color: green
+inputs:
+  args:
+    description: "Arguments to pass to aws s3 sync"
+    required: false
+    default: ""
+  source_dir:
+    description: "Source directory to sync"
+    required: false
+    default: "."
+  dest_dir:
+    description: "Destination directory in S3"
+    required: false
+    default: ""
+  aws_s3_bucket:
+    description: "Target S3 bucket"
+    required: true

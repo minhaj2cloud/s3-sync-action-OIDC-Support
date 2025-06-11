@@ -26,4 +26,5 @@ jobs:
         with:
           aws_s3_bucket: ${{ secrets.AWS_S3_BUCKET }}
           source_dir: public
-          args: --acl public-read --delete
+          args: --delete
+

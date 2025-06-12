@@ -25,6 +25,8 @@ fi
 
 echo "Syncing directory '$SOURCE_DIR' to s3://$AWS_S3_BUCKET/$DEST_DIR"
 echo "Using AWS Region: $AWS_REGION"
+echo "arg: $ARGS"
+echo "aws s3 sync "$SOURCE_DIR" "s3://$AWS_S3_BUCKET/$DEST_DIR" --region "$AWS_REGION" --no-progress $ENDPOINT_APPEND $ARGS"
 
 # Run the AWS S3 sync command
 aws s3 sync "$SOURCE_DIR" "s3://$AWS_S3_BUCKET/$DEST_DIR" \

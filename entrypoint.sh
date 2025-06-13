@@ -18,19 +18,24 @@ if [ -z "$AWS_REGION" ]; then
   AWS_REGION="ap-south-1"
 fi
 
-# Optional: override AWS S3 endpoint if set
-if [ -n "$AWS_S3_ENDPOINT" ]; then
-  ENDPOINT_APPEND="--endpoint-url $AWS_S3_ENDPOINT"
-fi
-
 echo "Syncing directory '$SOURCE_DIR' to s3://$AWS_S3_BUCKET/$DEST_DIR"
 echo "Using AWS Region: $AWS_REGION"
-echo "arg: $ARGS"
-echo "aws s3 sync "$SOURCE_DIR" "s3://$AWS_S3_BUCKET/$DEST_DIR" --region "$AWS_REGION" --no-progress $ENDPOINT_APPEND $ARGS"
+echo "Arguments: $ARGS"
 
-# Run the AWS S3 sync command
-aws s3 sync "$SOURCE_DIR" "s3://$AWS_S3_BUCKET/$DEST_DIR" \
-  --region "$AWS_REGION" \
-  --no-progress \
-  $ENDPOINT_APPEND $ARGS
+# Build the command step by step
+CMD="aws s3 sync $SOURCE_DIR s3://$AWS_S3_BUCKET/$DEST_DIR --region $AWS_REGION --no-progress"
 
+# Add endpoint if specified
+if [ -n "$AWS_S3_ENDPOINT" ]; then
+  CMD="$CMD --endpoint-url $AWS_S3_ENDPOINT"
+fi
+
+# Add custom arguments
+if [ -n "$ARGS" ]; then
+  CMD="$CMD $ARGS"
+fi
+
+echo "Executing: $CMD"
+
+# Execute the command using eval to properly handle quoted arguments
+eval $CMD

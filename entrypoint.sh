@@ -15,7 +15,12 @@ ARGS="${INPUT_ARGS}"                  # Additional aws s3 sync args
 
 # Default AWS region if not set in environment
 if [ -z "$AWS_REGION" ]; then
-  AWS_REGION="ap-south-1"
+  AWS_REGION="us-east-1"
+fi
+
+# Override default AWS endpoint if user sets AWS_S3_ENDPOINT.
+if [ -n "$AWS_S3_ENDPOINT" ]; then
+  ENDPOINT_APPEND="--endpoint-url $AWS_S3_ENDPOINT"
 fi
 
 # Construct S3 destination path properly
@@ -29,13 +34,30 @@ echo "Syncing directory '$SOURCE_DIR' to $S3_DEST"
 echo "Using AWS Region: $AWS_REGION"
 echo "Arguments: $ARGS"
 
-# Create a temporary script to properly handle arguments
-cat > /tmp/sync_script.sh << EOF
+# Check if this is a metadata sync (contains --content-type and --exclude '*.*')
+if echo "$ARGS" | grep -q -- "--content-type" && echo "$ARGS" | grep -q -- "--exclude '\*\.\*'"; then
+  echo "Performing metadata sync..."
+  
+  # Create a temporary script for metadata sync
+  cat > /tmp/metadata_sync_script.sh << EOF
 #!/bin/sh
 aws s3 sync "$SOURCE_DIR" "$S3_DEST" --region "$AWS_REGION" --no-progress $ARGS
 EOF
+  chmod +x /tmp/metadata_sync_script.sh
+  echo "Executing metadata sync command..."
+  /tmp/metadata_sync_script.sh && echo "Metadata sync completed"
+  
+else
+  echo "Performing regular sync..."
+  
+  # Create a temporary script for regular sync
+  cat > /tmp/sync_script.sh << EOF
+#!/bin/sh
+aws s3 sync "$SOURCE_DIR" "$S3_DEST" --region "$AWS_REGION" --no-progress $ARGS
+EOF
+  chmod +x /tmp/sync_script.sh
+  echo "Executing sync command..."
+  /tmp/sync_script.sh
+fi
 
-chmod +x /tmp/sync_script.sh
-
-echo "Executing sync command..."
-/tmp/sync_script.sh
+echo "Sync operation completed successfully!"

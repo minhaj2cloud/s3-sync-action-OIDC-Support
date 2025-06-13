@@ -29,18 +29,13 @@ echo "Syncing directory '$SOURCE_DIR' to $S3_DEST"
 echo "Using AWS Region: $AWS_REGION"
 echo "Arguments: $ARGS"
 
-# Build and execute the command
-if [ -n "$AWS_S3_ENDPOINT" ]; then
-  echo "Executing: aws s3 sync $SOURCE_DIR $S3_DEST --region $AWS_REGION --no-progress --endpoint-url $AWS_S3_ENDPOINT $ARGS"
-  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
-    --region "$AWS_REGION" \
-    --no-progress \
-    --endpoint-url "$AWS_S3_ENDPOINT" \
-    $ARGS
-else
-  echo "Executing: aws s3 sync $SOURCE_DIR $S3_DEST --region $AWS_REGION --no-progress $ARGS"
-  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
-    --region "$AWS_REGION" \
-    --no-progress \
-    $ARGS
-fi
+# Create a temporary script to properly handle arguments
+cat > /tmp/sync_script.sh << EOF
+#!/bin/sh
+aws s3 sync "$SOURCE_DIR" "$S3_DEST" --region "$AWS_REGION" --no-progress $ARGS
+EOF
+
+chmod +x /tmp/sync_script.sh
+
+echo "Executing sync command..."
+/tmp/sync_script.sh

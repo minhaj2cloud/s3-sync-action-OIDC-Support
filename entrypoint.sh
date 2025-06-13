@@ -18,24 +18,29 @@ if [ -z "$AWS_REGION" ]; then
   AWS_REGION="ap-south-1"
 fi
 
-echo "Syncing directory '$SOURCE_DIR' to s3://$AWS_S3_BUCKET/$DEST_DIR"
+# Construct S3 destination path properly
+if [ -n "$DEST_DIR" ]; then
+  S3_DEST="s3://$AWS_S3_BUCKET/$DEST_DIR"
+else
+  S3_DEST="s3://$AWS_S3_BUCKET"
+fi
+
+echo "Syncing directory '$SOURCE_DIR' to $S3_DEST"
 echo "Using AWS Region: $AWS_REGION"
 echo "Arguments: $ARGS"
 
-# Build the command step by step
-CMD="aws s3 sync $SOURCE_DIR s3://$AWS_S3_BUCKET/$DEST_DIR --region $AWS_REGION --no-progress"
-
-# Add endpoint if specified
+# Build and execute the command
 if [ -n "$AWS_S3_ENDPOINT" ]; then
-  CMD="$CMD --endpoint-url $AWS_S3_ENDPOINT"
+  echo "Executing: aws s3 sync $SOURCE_DIR $S3_DEST --region $AWS_REGION --no-progress --endpoint-url $AWS_S3_ENDPOINT $ARGS"
+  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
+    --region "$AWS_REGION" \
+    --no-progress \
+    --endpoint-url "$AWS_S3_ENDPOINT" \
+    $ARGS
+else
+  echo "Executing: aws s3 sync $SOURCE_DIR $S3_DEST --region $AWS_REGION --no-progress $ARGS"
+  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
+    --region "$AWS_REGION" \
+    --no-progress \
+    $ARGS
 fi
-
-# Add custom arguments
-if [ -n "$ARGS" ]; then
-  CMD="$CMD $ARGS"
-fi
-
-echo "Executing: $CMD"
-
-# Execute the command using eval to properly handle quoted arguments
-eval $CMD

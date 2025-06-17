@@ -58,12 +58,8 @@ if [ "$INPUT_METADATA_SYNC" = "true" ]; then
   CLEAN_ARGS=$(echo "$ARGS" | sed 's/--content-type[[:space:]]*[^[:space:]]*//' | sed "s/--exclude[[:space:]]*['\"][*][.][*]['\"]//")
   
   echo "Executing metadata sync command..."
-  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
-    --region "$AWS_REGION" \
-    --no-progress \
-    --content-type 'text/html' \
-    --exclude '*.*' \
-    $CLEAN_ARGS $ENDPOINT_APPEND && echo "Metadata sync completed"
+  # Parse the arguments properly and add metadata-specific flags
+  eval "aws s3 sync \"$SOURCE_DIR\" \"$S3_DEST\" --region \"$AWS_REGION\" --no-progress --content-type 'text/html' --exclude '*.*' $CLEAN_ARGS $ENDPOINT_APPEND" && echo "Metadata sync completed"
   
 else
   echo "Performing regular sync..."

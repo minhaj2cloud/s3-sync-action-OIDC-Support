@@ -47,7 +47,17 @@ fi
 
 echo "Syncing directory '$SOURCE_DIR' to $S3_DEST"
 echo "Using AWS Region: $AWS_REGION"
-echo "Arguments: $ARGS"
+echo "Raw arguments: $ARGS"
+
+# Clean up the arguments - remove extra quotes and parse properly
+CLEAN_ARGS=""
+for arg in $ARGS; do
+  # Remove surrounding quotes if they exist
+  cleaned_arg=$(echo "$arg" | sed 's/^"//;s/"$//')
+  CLEAN_ARGS="$CLEAN_ARGS $cleaned_arg"
+done
+
+echo "Cleaned arguments: $CLEAN_ARGS"
 
 # Check if this is a metadata sync (check for metadata flag)
 if [ "$INPUT_METADATA_SYNC" = "true" ]; then
@@ -58,8 +68,23 @@ if [ "$INPUT_METADATA_SYNC" = "true" ]; then
   CLEAN_ARGS=$(echo "$ARGS" | sed 's/--content-type[[:space:]]*[^[:space:]]*//' | sed "s/--exclude[[:space:]]*['\"][*][.][*]['\"]//")
   
   echo "Executing metadata sync command..."
-  # Parse the arguments properly and add metadata-specific flags
-  eval "aws s3 sync \"$SOURCE_DIR\" \"$S3_DEST\" --region \"$AWS_REGION\" --no-progress --content-type 'text/html' --exclude '*.*' $CLEAN_ARGS $ENDPOINT_APPEND" && echo "Metadata sync completed"
+  # For metadata sync, clean the args and add metadata-specific flags
+  METADATA_CLEAN_ARGS=""
+  for arg in $ARGS; do
+    cleaned_arg=$(echo "$arg" | sed 's/^"//;s/"$//')
+    # Skip content-type and exclude *.* if they're already in the args
+    if ! echo "$cleaned_arg" | grep -q -- "--content-type\|--exclude.*\*\.\*"; then
+      METADATA_CLEAN_ARGS="$METADATA_CLEAN_ARGS $cleaned_arg"
+    fi
+  done
+  
+  echo "Metadata sync arguments: $METADATA_CLEAN_ARGS"
+  aws s3 sync "$SOURCE_DIR" "$S3_DEST" \
+    --region "$AWS_REGION" \
+    --no-progress \
+    --content-type 'text/html' \
+    --exclude '*.*' \
+    $METADATA_CLEAN_ARGS $ENDPOINT_APPEND && echo "Metadata sync completed"
   
 else
   echo "Performing regular sync..."

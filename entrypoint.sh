@@ -1,12 +1,12 @@
 #!/bin/sh
 set -e
 # GitHub Actions inputs are passed as environment variables with INPUT_ prefix and uppercase
-if [ -z "$INPUT_AWS_S3_BUCKET" ]; then
+if [ -z "$AWS_S3_BUCKET" ]; then
   echo "Error: aws_s3_bucket input is not set. Quitting."
   exit 1
 fi
 # Use the input values from GitHub Actions
-AWS_S3_BUCKET="$INPUT_AWS_S3_BUCKET"
+AWS_S3_BUCKET="$AWS_S3_BUCKET"
 SOURCE_DIR="${INPUT_SOURCE_DIR:-.}"   # Default to current directory if not set
 DEST_DIR="${INPUT_DEST_DIR}"          # Can be empty
 ARGS="${INPUT_ARGS}"                  # Additional aws s3 sync args
